@@ -15,7 +15,7 @@ canvas {
 <canvas id="canvas" width="640" height="480"></canvas>
 <canvas id="mirror"></canvas>
 
-<img id="img" src="https://khom.users.x20web.corp.google.com/www/no_crawl/kaleidoscope/fire-beads.jpg" onload="window.init()">
+<img id="img" src="fire-beads.jpg" onload="window.init()">
 <script>
 var can = document.getElementById('canvas');
 var mir = document.getElementById('mirror');
@@ -93,7 +93,7 @@ function initSound() {
   context = new AudioContext();
 
   bufferLoader = new BufferLoader(
-    context, ['https://khom.users.x20web.corp.google.com/www/no_crawl/kaleidoscope/Lipless-Two_Of_Us.m4a'],
+    context, ['Lipless-Two_Of_Us.m4a'],
     finishedLoading
     );
 
