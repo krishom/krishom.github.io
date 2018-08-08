@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+body {
+  background: black;
+  text-align: center;
+}
+canvas {
+  background: black;
+}
+#mirror,#img {
+  display: none;
+}
+</style>
+<canvas id="canvas" width="640" height="480"></canvas>
+<canvas id="mirror"></canvas>
+
+<img id="img" src="https://khom.users.x20web.corp.google.com/www/no_crawl/kaleidoscope/fire-beads.jpg" onload="window.init()">
+<script>
+var can = document.getElementById('canvas');
+var mir = document.getElementById('mirror');
+var ctx = can.getContext('2d');
+var mirCtx = mir.getContext('2d');
+var wMid = can.width / 2;
+var hMid = can.height / 2;
+var img = document.getElementById('img');
+var offset = img.width;
+var delta = 0.2;
+var angle = 0;
+
+function init() {
+  mir.width = img.width * 2;
+  mir.height = img.height * 2;
+  reflect(mirCtx, img, img.width, img.height, 0, 0, 0);
+  draw();
+  initSound()
+}
+
+var context;
+var bufferLoader;
+function BufferLoader(context, urlList, callback) {
+  this.context = context;
+  this.urlList = urlList;
+  this.onload = callback;
+  this.bufferList = new Array();
+  this.loadCount = 0;
+}
+
+BufferLoader.prototype.loadBuffer = function(url, index) {
+  // Load buffer asynchronously
+  var request = new XMLHttpRequest();
+  request.open("GET", url, true);
+  request.responseType = "arraybuffer";
+
+  var loader = this;
+
+  request.onload = function() {
+    // Asynchronously decode the audio file data in request.response
+    loader.context.decodeAudioData(
+      request.response,
+      function(buffer) {
+        if (!buffer) {
+          alert('error decoding file data: ' + url);
+          return;
+        }
+        loader.bufferList[index] = buffer;
+        if (++loader.loadCount == loader.urlList.length)
+          loader.onload(loader.bufferList);
+      },
+      function(error) {
+        console.error('decodeAudioData error', error);
+      }
+    );
+  }
+
+  request.onerror = function() {
+    alert('BufferLoader: XHR error');
+  }
+
+  request.send();
+}
+
+BufferLoader.prototype.load = function() {
+  for (var i = 0; i < this.urlList.length; ++i)
+  this.loadBuffer(this.urlList[i], i);
+}
+
+function initSound() {
+  // Fix up prefixing
+  window.AudioContext = window.AudioContext || window.webkitAudioContext;
+  context = new AudioContext();
+
+  bufferLoader = new BufferLoader(
+    context, ['https://khom.users.x20web.corp.google.com/www/no_crawl/kaleidoscope/Lipless-Two_Of_Us.m4a'],
+    finishedLoading
+    );
+
+  bufferLoader.load();
+}
+
+function finishedLoading(bufferList) {
+  // Create two sources and play them both together.
+  var source1 = context.createBufferSource();
+  source1.buffer = bufferList[0];
+  source1.connect(context.destination);
+  source1.start(0);
+}
+
+function reflect(ctx, img, midX, midY, sx, sy, angle) {
+  ctx.save();
+  ctx.translate(midX, midY);
+  ctx.rotate(angle);
+  ctx.drawImage(img, sx, sy, img.width, img.height, 0, 0, img.width, img.height);
+  ctx.scale(-1, 1);
+  ctx.drawImage(img, sx, sy, img.width, img.height, 0, 0, img.width, img.height);
+  ctx.scale(1, -1);
+  ctx.drawImage(img, sx, sy, img.width, img.height, 0, 0, img.width, img.height);
+  ctx.scale(-1, 1);
+  ctx.drawImage(img, sx, sy, img.width, img.height, 0, 0, img.width, img.height);
+  ctx.restore();
+}
+
+function draw() {
+  requestAnimationFrame(draw);
+  reflect(ctx, mir, wMid, hMid, offset, offset, angle);
+  offset += delta;
+  if (offset > img.width) {
+    delta = -0.2;
+    offset = img.width
+  }
+  if (offset < 0) {
+    delta = 0.2;
+    offset = 0
+  }
+  angle += Math.PI / 180 * .25;
+}
+</script>
